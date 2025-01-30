@@ -5,6 +5,8 @@ import requests
 import streamlit as st
 from requests.auth import HTTPBasicAuth
 
+from utils import get_file_id
+
 CLIENT_ID = st.secrets["CLIENT_ID"]
 CLIENT_SECRET = st.secrets["CLIENT_SECRET"]
 
@@ -30,13 +32,22 @@ def get_access_token() -> str:
     access_token = res.json()["access_token"]
     return access_token
 
-def get_image():
-    pass
+def get_image(file_id: str, access_token: str) -> str:
+    url = f"https://gigachat.devices.sberbank.ru/api/v1/files/{file_id}/content"
 
-def send_prompt(msg: str, access_token: str):
+    payload = {}
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': f'Bearer {access_token}',
+    }
+
+    response = requests.get(url, headers=headers, data=payload, verify=False)
+    return response.content
+
+def send_prompt(msg: str, access_token: str, attachments: str = ""):
     url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
 
-    payload = json.dumps({
+    data = {
         "model": "GigaChat-Pro",
         "messages": [
             {
@@ -44,16 +55,48 @@ def send_prompt(msg: str, access_token: str):
                 "content": msg,
             }
         ],
-    })
+    }
+
+
+    if attachments:
+        for message in data["messages"]:
+            message["attachments"] = [attachments]
+
+
+    payload = json.dumps(data)
     headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+     'Accept': 'application/json',
         'Authorization': f'Bearer {access_token}'
     }
 
     response = requests.post(url, headers=headers, data=payload, verify=False)
+    print(response.content)
+
+
     return response.json()["choices"][0]["message"]["content"]
 
-def send_prompt_and_get_response():
-    send_prompt()
-    ...
+def send_prompt_and_get_response(msg: str, access_token: str, attachments: str = ""):
+    res = send_prompt(msg, access_token, attachments)
+    data, is_image = get_file_id(res)
+    if is_image:
+        data = get_image(file_id=data, access_token=access_token)
+    return data, is_image
+
+
+def send_file_and_get_response(file, access_token: str ):
+    url = "https://gigachat.devices.sberbank.ru/api/v1/files"
+
+    payload = {'purpose': 'general'}
+
+    files = [
+        ('file', ('response.jpeg', open(file,'rb'), 'image/jpeg'))
+    ]
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+    }
+
+    response = requests.post(url, headers=headers, data=payload, files=files, verify=False)
+
+    return response.json()["id"]
