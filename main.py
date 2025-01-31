@@ -73,8 +73,6 @@ st.title("CodeClass ChatBot")
 
 uploaded_file = st.file_uploader("Загрузить файл", type=("txt", "md", "png", "jpg", "jpeg"))
 
-
-
 chat_placeholder = st.empty()
 
 def on_input_change():
