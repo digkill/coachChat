@@ -84,9 +84,9 @@ def on_btn_click():
     del st.session_state.past[:]
     del st.session_state.generated[:]
 
-def send_prompt(user_prompt: str):
-    st.chat_message("user").write(user_prompt)
-    st.session_state.messages.append({"role": "user", "content": user_prompt})
+def send_prompt(u_prompt: str):
+    st.chat_message("user").write(u_prompt)
+    st.session_state.messages.append({"role": "user", "content": u_prompt})
 
     with st.spinner("Минуточку ..."):
         response_file = ""
@@ -112,7 +112,7 @@ def send_prompt(user_prompt: str):
             st.session_state.messages.append({"role": "ai", "content": data, "is_image": True})
 
 
-        response, is_image = send_prompt_and_get_response(user_prompt, st.session_state.access_token, response_file)
+        response, is_image = send_prompt_and_get_response(u_prompt, st.session_state.access_token, response_file)
         if is_image:
             st.chat_message("ai").image(response)
             st.session_state.messages.append({"role": "ai", "content": response, "is_image": True})
